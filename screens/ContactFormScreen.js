@@ -1,9 +1,11 @@
-//screens/ContactFormScreen.js
 import { useState } from "react";
 import { View, TextInput, TouchableOpacity, Text } from "react-native";
 import stylesGlobal from "../styles/globalStyles";
 import { saveContacts, loadContacts } from "../utils/storage";
 import { v4 as uuidv4 } from "uuid";
+function generarId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
 
 export default function ContactFormScreen({ navigation, route }) {
   const { mode, contact } = route.params || {};
@@ -25,7 +27,7 @@ export default function ContactFormScreen({ navigation, route }) {
       );
     } else {
       list.push({
-        id: uuidv4(), 
+        id: generarId(),
         name,
         phone,
         email,

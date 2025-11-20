@@ -1,31 +1,42 @@
 // screens/ContactDetailScreen.js
 import { View, Text, TouchableOpacity, Platform, Alert } from "react-native";
+import { useEffect, useState } from "react";
 import stylesGlobal from "../styles/globalStyles";
 import { saveContacts, loadContacts } from "../utils/storage";
 import colors from "../styles/colors";
 
 export default function ContactDetailScreen({ route, navigation }) {
   const { contact } = route.params;
+  const [data, setData] = useState(contact);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadContacts().then((list) => {
+        const updated = list.find((c) => c.id === data.id);
+        if (updated) setData(updated);
+      });
+    });
 
-  // ELIMINAR CONTACTO (Funciona en Android, iOS y Web)
+    return unsubscribe;
+  }, [navigation]);
+
   const deleteContact = async () => {
-    // ⚠ Alert NO funciona en web en algunos entornos, así que hacemos fallback
     if (Platform.OS === "web") {
       const confirmDelete = window.confirm(
-        `¿Seguro que deseas eliminar a ${contact.name}?`
+        `¿Seguro que deseas eliminar a ${data.name}?`
       );
 
       if (!confirmDelete) return;
 
       const list = await loadContacts();
-      const newList = list.filter((c) => c.id !== contact.id);
+      const newList = list.filter((c) => c.id !== data.id);
       await saveContacts(newList);
       navigation.navigate("Home");
       return;
     }
+
     Alert.alert(
       "Eliminar contacto",
-      `¿Seguro que deseas eliminar a ${contact.name}?`,
+      `¿Seguro que deseas eliminar a ${data.name}?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -33,7 +44,7 @@ export default function ContactDetailScreen({ route, navigation }) {
           style: "destructive",
           onPress: async () => {
             const list = await loadContacts();
-            const newList = list.filter((c) => c.id !== contact.id);
+            const newList = list.filter((c) => c.id !== data.id);
             await saveContacts(newList);
             navigation.navigate("Home");
           },
@@ -54,20 +65,21 @@ export default function ContactDetailScreen({ route, navigation }) {
       </TouchableOpacity>
 
       {/*info del contacto*/}
-      <Text style={stylesGlobal.title}>{contact.name}</Text>
+      <Text style={stylesGlobal.title}>{data.name}</Text>
 
-      <Text style={{ marginTop: 10, fontSize: 16 }}>{contact.phone}</Text>
-      <Text style={{ fontSize: 16 }}>{contact.email}</Text>
-      <Text style={{ marginTop: 10, fontSize: 16 }}>{contact.note}</Text>
+      <Text style={{ marginTop: 10, fontSize: 16 }}>{data.phone}</Text>
+      <Text style={{ fontSize: 16 }}>{data.email}</Text>
+      <Text style={{ marginTop: 10, fontSize: 16 }}>{data.note}</Text>
 
-      {/*boton de EDITAR */}
+      {/*botón EDITAR */}
       <TouchableOpacity
         style={[stylesGlobal.button, { marginTop: 30 }]}
-        onPress={() => navigation.navigate("Form", { mode: "edit", contact })}
+        onPress={() => navigation.navigate("Form", { mode: "edit", contact: data })}
       >
         <Text style={stylesGlobal.buttonText}>Editar</Text>
       </TouchableOpacity>
-        {/* boton de  ELIMINAR */}
+
+      {/* botón ELIMINAR */}
       <TouchableOpacity
         style={[
           stylesGlobal.button,
@@ -79,10 +91,7 @@ export default function ContactDetailScreen({ route, navigation }) {
             pointerEvents: "auto",
           },
         ]}
-        onPress={() => {
-          console.log("ELIMINAR PRESIONADO");
-          deleteContact();
-        }}
+        onPress={deleteContact}
       >
         <Text style={stylesGlobal.buttonText}>Eliminar</Text>
       </TouchableOpacity>
